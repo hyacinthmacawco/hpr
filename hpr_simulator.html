@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HPR Simulator - Hiddenness-Penalized Reward</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .value-display {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chart-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .agent-info {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .agent-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .agent-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            input[type="range"] {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 HPR Simulator</h1>
+        <p class="subtitle">Hiddenness-Penalized Reward Interactive Visualization</p>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="penaltySlider">Penalty Coefficient (λ)</label>
+                    <input type="range" id="penaltySlider" min="0" max="1" step="0.01" value="0.1">
+                    <span class="value-display" id="penaltyValue">0.10</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="agentType">Agent Type</label>
+                    <select id="agentType">
+                        <option value="stupid">Stupid Agent</option>
+                        <option value="cunning">Cunning Agent</option>
+                        <option value="wise">Wise Agent</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="observerType">Observer Type</label>
+                    <select id="observerType">
+                        <option value="simple">Simple Predictor</option>
+                        <option value="advanced">Advanced Predictor</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" id="runBtn">▶ Run Simulation</button>
+                <button class="btn-secondary" id="resetBtn">↺ Reset</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalSteps">0</div>
+                <div class="stat-label">Total Steps</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgEnvReward">0.00</div>
+                <div class="stat-label">Avg Environment Reward</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgPredictionError">0.00</div>
+                <div class="stat-label">Avg Prediction Error</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgHPRReward">0.00</div>
+                <div class="stat-label">Avg HPR Reward</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📈 Rewards Over Time</h3>
+                <canvas id="rewardChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🎯 Prediction Error Over Time</h3>
+                <canvas id="errorChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📊 State Evolution</h3>
+                <canvas id="stateChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🔍 Observer Predictions vs Actual</h3>
+                <canvas id="predictionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="agent-info">
+            <h3 id="agentTitle">Stupid Agent</h3>
+            <p class="agent-description" id="agentDescription">
+                A stupid agent makes mistakes, causes problems, and then tries to hide the consequences poorly. 
+                This produces high prediction error for the observer, resulting in lower HPR rewards despite 
+                potentially achieving the task objective.
+            </p>
+            <p><strong>Current Episode:</strong> <span id="currentEpisode">0</span></p>
+            <p><strong>Penalty Applied:</strong> <span id="currentPenalty">0.00</span></p>
+        </div>
+    </div>
+
+    <script>
+        // HPR Simulator Logic
+        class HPRSimulator {
+            constructor() {
+                this.penalty = 0.1;
+                this.agentType = 'stupid';
+                this.observerType = 'simple';
+                this.history = [];
+                this.predictions = [];
+                this.actuals = [];
+                this.envRewards = [];
+                this.hprRewards = [];
+                this.predictionErrors = [];
+                this.states = [];
+                this.step = 0;
+                this.episode = 0;
+                this.running = false;
+                this.interval = null;
+
+                this.initCharts();
+                this.setupEventListeners();
+                this.updateAgentInfo();
+            }
+
+            initCharts() {
+                const commonOptions = {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: {
+                        duration: 300,
+                        easing: 'easeOutQuart'
+                    }
+                };
+
+                // Reward Chart
+                this.rewardChart = new Chart(document.getElementById('rewardChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Environment Reward',
+                            data: [],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'HPR Reward',
+                            data: [],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                // Error Chart
+                this.errorChart = new Chart(document.getElementById('errorChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Prediction Error',
+                            data: [],
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                // State Chart
+                this.stateChart = new Chart(document.getElementById('stateChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'State Value',
+                            data: [],
+                            borderColor: '#9b59b6',
+                            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                // Prediction Chart
+                this.predictionChart = new Chart(document.getElementById('predictionChart'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Observer Prediction',
+                            data: [],
+                            borderColor: '#f39c12',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }, {
+                            label: 'Actual State',
+                            data: [],
+                            borderColor: '#3498db',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            x: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                // Penalty slider
+                const penaltySlider = document.getElementById('penaltySlider');
+                const penaltyValue = document.getElementById('penaltyValue');
+                
+                penaltySlider.addEventListener('input', (e) => {
+                    this.penalty = parseFloat(e.target.value);
+                    penaltyValue.textContent = this.penalty.toFixed(2);
+                    document.getElementById('currentPenalty').textContent = this.penalty.toFixed(2);
+                });
+
+                // Agent type selector
+                document.getElementById('agentType').addEventListener('change', (e) => {
+                    this.agentType = e.target.value;
+                    this.updateAgentInfo();
+                });
+
+                // Observer type selector
+                document.getElementById('observerType').addEventListener('change', (e) => {
+                    this.observerType = e.target.value;
+                });
+
+                // Run button
+                document.getElementById('runBtn').addEventListener('click', () => {
+                    if (this.running) {
+                        this.pause();
+                    } else {
+                        this.run();
+                    }
+                });
+
+                // Reset button
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.reset();
+                });
+            }
+
+            updateAgentInfo() {
+                const titles = {
+                    stupid: '🤪 Stupid Agent',
+                    cunning: '🦊 Cunning Agent',
+                    wise: '🧙 Wise Agent'
+                };
+
+                const descriptions = {
+                    stupid: 'A stupid agent makes mistakes, causes problems, and then tries to hide the consequences poorly. This produces high prediction error for the observer, resulting in lower HPR rewards despite potentially achieving the task objective.',
+                    cunning: 'A cunning agent is better at avoiding mistakes, but when mistakes occur, it can hide them effectively. This can produce behavior that is difficult for the observer to predict, leading to moderate HPR rewards.',
+                    wise: 'A wise agent accomplishes the task without making mistakes in the first place, hence without having to hide anything. This achieves the same task objective while producing less observer prediction error, maximizing HPR rewards.'
+                };
+
+                document.getElementById('agentTitle').textContent = titles[this.agentType];
+                document.getElementById('agentDescription').textContent = descriptions[this.agentType];
+            }
+
+            // Simulate environment step
+            simulateStep() {
+                // Generate state based on agent type
+                let state, envReward, noise;
+                
+                switch(this.agentType) {
+                    case 'stupid':
+                        // High variance, unpredictable behavior
+                        noise = (Math.random() - 0.5) * 4;
+                        state = Math.sin(this.step * 0.3) + noise;
+                        envReward = Math.random() > 0.3 ? 1 : -1; // Often makes mistakes
+                        break;
+                    case 'cunning':
+                        // Moderate variance, some hiding
+                        noise = (Math.random() - 0.5) * 2;
+                        state = Math.sin(this.step * 0.3) + noise;
+                        envReward = Math.random() > 0.2 ? 1 : -0.5; // Occasionally makes mistakes
+                        break;
+                    case 'wise':
+                        // Low variance, predictable optimal behavior
+                        noise = (Math.random() - 0.5) * 0.5;
+                        state = Math.sin(this.step * 0.3) + noise;
+                        envReward = 1; // Consistently good
+                        break;
+                }
+
+                // Observer prediction based on history
+                let prediction;
+                if (this.history.length === 0) {
+                    prediction = 0;
+                } else {
+                    switch(this.observerType) {
+                        case 'simple':
+                            // Simple predictor: uses last observation
+                            prediction = this.history[this.history.length - 1];
+                            break;
+                        case 'advanced':
+                            // Advanced predictor: uses moving average
+                            const windowSize = Math.min(5, this.history.length);
+                            const recentHistory = this.history.slice(-windowSize);
+                            prediction = recentHistory.reduce((a, b) => a + b, 0) / windowSize;
+                            // Add trend estimation
+                            if (this.history.length >= 2) {
+                                const trend = this.history[this.history.length - 1] - this.history[this.history.length - 2];
+                                prediction += trend * 0.5;
+                            }
+                            break;
+                    }
+                }
+
+                // Calculate prediction error (MSE)
+                const error = Math.pow(prediction - state, 2);
+
+                // Calculate HPR reward
+                const hprReward = envReward - this.penalty * error;
+
+                // Update history
+                this.history.push(state);
+                this.predictions.push(prediction);
+                this.actuals.push(state);
+                this.envRewards.push(envReward);
+                this.hprRewards.push(hprReward);
+                this.predictionErrors.push(error);
+                this.states.push(state);
+
+                // Update charts
+                this.updateCharts();
+                this.updateStats();
+
+                this.step++;
+
+                // Check for episode end (every 100 steps for demo)
+                if (this.step % 100 === 0) {
+                    this.episode++;
+                    document.getElementById('currentEpisode').textContent = this.episode;
+                    this.history = [];
+                }
+            }
+
+            updateCharts() {
+                const labels = Array.from({length: this.step}, (_, i) => i + 1);
+
+                // Update reward chart
+                this.rewardChart.data.labels = labels.slice(-50);
+                this.rewardChart.data.datasets[0].data = this.envRewards.slice(-50);
+                this.rewardChart.data.datasets[1].data = this.hprRewards.slice(-50);
+                this.rewardChart.update('none');
+
+                // Update error chart
+                this.errorChart.data.labels = labels.slice(-50);
+                this.errorChart.data.datasets[0].data = this.predictionErrors.slice(-50);
+                this.errorChart.update('none');
+
+                // Update state chart
+                this.stateChart.data.labels = labels.slice(-50);
+                this.stateChart.data.datasets[0].data = this.states.slice(-50);
+                this.stateChart.update('none');
+
+                // Update prediction chart
+                this.predictionChart.data.labels = labels.slice(-50);
+                this.predictionChart.data.datasets[0].data = this.predictions.slice(-50);
+                this.predictionChart.data.datasets[1].data = this.actuals.slice(-50);
+                this.predictionChart.update('none');
+            }
+
+            updateStats() {
+                document.getElementById('totalSteps').textContent = this.step;
+                
+                const avgEnvReward = this.envRewards.length > 0 
+                    ? (this.envRewards.reduce((a, b) => a + b, 0) / this.envRewards.length).toFixed(2)
+                    : '0.00';
+                document.getElementById('avgEnvReward').textContent = avgEnvReward;
+
+                const avgPredError = this.predictionErrors.length > 0
+                    ? (this.predictionErrors.reduce((a, b) => a + b, 0) / this.predictionErrors.length).toFixed(2)
+                    : '0.00';
+                document.getElementById('avgPredictionError').textContent = avgPredError;
+
+                const avgHPR = this.hprRewards.length > 0
+                    ? (this.hprRewards.reduce((a, b) => a + b, 0) / this.hprRewards.length).toFixed(2)
+                    : '0.00';
+                document.getElementById('avgHPRReward').textContent = avgHPR;
+            }
+
+            run() {
+                this.running = true;
+                document.getElementById('runBtn').textContent = '⏸ Pause';
+                this.interval = setInterval(() => this.simulateStep(), 50);
+            }
+
+            pause() {
+                this.running = false;
+                document.getElementById('runBtn').textContent = '▶ Resume';
+                clearInterval(this.interval);
+            }
+
+            reset() {
+                this.pause();
+                document.getElementById('runBtn').textContent = '▶ Run Simulation';
+                this.step = 0;
+                this.episode = 0;
+                this.history = [];
+                this.predictions = [];
+                this.actuals = [];
+                this.envRewards = [];
+                this.hprRewards = [];
+                this.predictionErrors = [];
+                this.states = [];
+
+                // Clear charts
+                [this.rewardChart, this.errorChart, this.stateChart, this.predictionChart].forEach(chart => {
+                    chart.data.labels = [];
+                    chart.data.datasets.forEach(dataset => dataset.data = []);
+                    chart.update();
+                });
+
+                // Reset stats
+                document.getElementById('totalSteps').textContent = '0';
+                document.getElementById('avgEnvReward').textContent = '0.00';
+                document.getElementById('avgPredictionError').textContent = '0.00';
+                document.getElementById('avgHPRReward').textContent = '0.00';
+                document.getElementById('currentEpisode').textContent = '0';
+            }
+        }
+
+        // Initialize simulator
+        const simulator = new HPRSimulator();
+    </script>
+</body>
+</html>
