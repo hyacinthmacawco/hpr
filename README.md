@@ -10,11 +10,23 @@ where:
 
 - $r_t^{env}$ is the environment's original reward.
 - $E_t$ is the observer's prediction error for the next state.
-- $\lambda\$ controls the strength of the penalty.
+- $\lambda$ controls the strength of the penalty.
 
 The goal is to encourage agents to accomplish their tasks while producing trajectories that are easier for a chosen observer to predict.
 
-## Installation
+## Interactive Simulator
+
+Try the HPR concept with our interactive HTML simulator! Open `hpr_simulator.html` in your browser to:
+
+- Visualize how different agent types (Stupid, Cunning, Wise) perform under HPR
+- Adjust the penalty coefficient (λ) in real-time
+- Compare Environment Reward vs HPR Reward
+- Observe prediction errors and observer predictions
+- See how different observer types affect the penalty
+
+No installation required - just open the HTML file in any modern browser!
+
+## Python Installation
 
 Install the dependencies:
 
@@ -22,7 +34,7 @@ Install the dependencies:
 pip install gymnasium
 ```
 
-Then copy `hpr.py` into the project.
+Then copy `hpr.py` into your project.
 
 ## Basic Usage
 
