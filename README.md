@@ -14,39 +14,13 @@ where:
 
 The goal is to encourage agents to accomplish their tasks while producing trajectories that are easier for a chosen observer to predict.
 
-## Interactive Simulator
+Some features of the simulator:
 
-Try the HPR concept with our interactive HTML simulator! Open `hpr_simulator.html` in your browser to:
-
-- Visualize how different agent types (Stupid, Cunning, Wise) perform under HPR
+- Visualize how different intelligence levels perform e.g. stupid, cunning, wise
 - Adjust the penalty coefficient (λ) in real-time
 - Compare Environment Reward vs HPR Reward
 - Observe prediction errors and observer predictions
 - See how different observer types affect the penalty
-
-HPR does not prescribe what constitutes a 'good' observer.
-
-It can be:
-
-* A simple statistical predictor
-* A neural network
-* An RNN or LSTM
-* A Transformer
-* A world model etc.
-
-The observer can use the complete history and process it however it chooses.
-
-Ensure that the weights of the observer are frozen.
-
-The prediction-error function is also supplied by oneself.
-
-For example, depending on the environment, the error could be based on:
-
-* Mean squared error
-* Cross-entropy
-* Negative log-likelihood
-* A custom distance
-* A domain-specific loss
 
 ## Motivation
 
@@ -73,6 +47,30 @@ This can produce behavior that is even more difficult for the observer to predic
 A wise agent would accomplish the task without making the mistake in the first place, and hence, without having to hide the mistake.
 
 The wise solution can therefore achieve the same task objective while producing less observer prediction error.
+
+HPR does not prescribe any quality criterion on the aobserver.
+
+It can be:
+
+* A simple statistical predictor
+* A neural network
+* An RNN or LSTM
+* A Transformer
+* A world model etc.
+
+The observer can use the complete history and process it however it chooses.
+
+Ensure that the weights of the observer are frozen.
+
+The prediction-error function is also supplied by oneself.
+
+For example, depending on the environment, the error could be based on:
+
+* Mean squared error
+* Cross-entropy
+* Negative log-likelihood
+* A custom distance
+* A domain-specific loss
 
 ## Theory
 
