@@ -24,78 +24,6 @@ Try the HPR concept with our interactive HTML simulator! Open `hpr_simulator.htm
 - Observe prediction errors and observer predictions
 - See how different observer types affect the penalty
 
-No installation required - just open the HTML file in any modern browser!
-
-## Python Installation
-
-Install the dependencies:
-
-```bash
-pip install gymnasium
-```
-
-Then copy `hpr.py` into your project.
-
-## Basic Usage
-
-```python
-import gymnasium as gym
-
-from hpr import HiddennessPenalizedEnvironment
-
-
-class MyObserver:
-
-    def predict(self, history):
-        # Predict the next observation using the history.
-        return ...
-
-
-def prediction_error(prediction, actual):
-    # Return a scalar prediction error.
-    return ...
-
-
-env = gym.make("CartPole-v1")
-
-observer = MyObserver()
-
-env = HiddennessPenalizedEnvironment(
-    env,
-    observer=observer,
-    prediction_error=prediction_error,
-    penalty=0.1,
-)
-
-observation, info = env.reset()
-
-for _ in range(1000):
-
-    action = env.action_space.sample()
-
-    observation, reward, terminated, truncated, info = env.step(action)
-
-    if terminated or truncated:
-        observation, info = env.reset()
-```
-
-The observer only needs to implement:
-
-```python
-predict(history)
-```
-
-where `history` contains the observations available before the transition.
-
-For example:
-
-```python
-class MyObserver:
-
-    def predict(self, history):
-        return model(history)
-```
-
 HPR does not prescribe what constitutes a 'good' observer.
 
 It can be:
@@ -110,12 +38,7 @@ The observer can use the complete history and process it however it chooses.
 
 Ensure that the weights of the observer are frozen.
 
-The prediction-error function is also supplied by oneself:
-
-```python
-def prediction_error(prediction, actual):
-    return loss(prediction, actual)
-```
+The prediction-error function is also supplied by oneself.
 
 For example, depending on the environment, the error could be based on:
 
@@ -124,21 +47,6 @@ For example, depending on the environment, the error could be based on:
 * Negative log-likelihood
 * A custom distance
 * A domain-specific loss
-
-The resulting Gymnasium environment can be given to an RL algorithm.
-
-For example:
-
-```python
-env = HiddennessPenalizedEnvironment(
-    env,
-    observer=observer,
-    prediction_error=prediction_error,
-    penalty=0.1,
-)
-
-agent = PPO("MlpPolicy", env)
-```
 
 ## Motivation
 
@@ -195,19 +103,6 @@ The resulting prediction error is subtracted from the environment reward:
 $$
 r_t^{HPR} = r_t^{env} - \lambda E_t
 $$
-
-## Logging
-
-The wrapper exposes additional information through the standard Gymnasium `info` dictionary:
-
-```python
-info["hpr_prediction_error"]
-info["hpr_penalty"]
-info["hpr_environment_reward"]
-info["hpr_reward"]
-```
-
-This makes it possible to separately analyze task performance and the hiddenness penalty.
 
 ## License
 
